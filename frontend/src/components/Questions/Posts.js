@@ -1,92 +1,111 @@
-import React, { useEffect, useState } from 'react'
-import { NavLink } from 'react-router-dom';
-import parse from 'html-react-parser';
+import React, { useEffect, useState } from "react";
+import { NavLink } from "react-router-dom";
+import parse from "html-react-parser";
 
 export default function Posts({ posts }) {
-    const [noOfAns, setnoOfAns] = useState({});
-    const [vote, setVotes]  = useState({});
+  const [noOfAns, setNoOfAns] = useState({});
+  const [votes, setVotes] = useState({});
 
-     // This function will find the count of No. of answer for a perticular Question
-     const FindFrequencyOfAns = async () => {
-        const response = await fetch("http://localhost:5000/api/answer/findNumberOfAns", {
-            method: "POST",
-            headers: {
-                'Content-Type': 'application/json'
-            }
-        });
-
-        const json = await response.json();
-        setnoOfAns(json);
-
+  // Function to find the count of answers for a particular question
+  const findFrequencyOfAns = async () => {
+    try {
+      const response = await fetch(
+        "http://localhost:5000/api/answer/findNumberOfAns",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+        }
+      );
+      const json = await response.json();
+      setNoOfAns(json);
+    } catch (error) {
+      console.error("Error fetching answer frequencies:", error);
     }
+  };
 
-    const fetchVotes = async()=>{
-
-        const response = await fetch(`http://localhost:5000/api/question/fetchallVotes`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-        });
-
-        let json = await response.json();
-        setVotes(json);
-
+  // Function to fetch votes for questions
+  const fetchVotes = async () => {
+    try {
+      const response = await fetch(
+        "http://localhost:5000/api/question/fetchallVotes",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+        }
+      );
+      const json = await response.json();
+      setVotes(json);
+    } catch (error) {
+      console.error("Error fetching votes:", error);
     }
+  };
 
-    useEffect(() => {
-        // fetchAllQuestions();
-        FindFrequencyOfAns();
-        fetchVotes();
+  useEffect(() => {
+    findFrequencyOfAns();
+    fetchVotes();
+  }, []);
 
-    }, [])
-
-    return (
-        <>
-            <ul>
-                {posts.map(question => (
-                    <div className="all-questions">
-                        <div className="all-questions-container">
-                            <div className="all-questions-left">
-                                <div className="all-options">
-                                    <div className="all-option">
-                                        <p>{vote[question._id]}</p>
-                                        <span>votes</span>
-                                    </div>
-                                    <div className="all-option">
-
-                                        {(
-                                            () => {
-                                                if (question._id in noOfAns) {
-                                                    return (<p>{noOfAns[question._id]}</p>);
-                                                }
-                                                else {
-                                                    return (<>0</>);
-                                                }
-                                            }
-                                        )()}
-                                        <span>Answers</span>
-                                    </div>
-                                    
-                                </div>
-                            </div>
-
-                            <div className="question-answer">
-                                <NavLink to={{ pathname: `/question/${question._id}` }} className="card-title" Style="text-decoration:none;color:#0074CC"><h4>{question.title}</h4></NavLink>
-                                <div style={{ width: "90%", }}>
-                                    <small Style="font-size:1px;">{parse(question.question)[0]}</small>
-                                </div>
-                                
-                                <div className='mt-3'>{question.tags.split(" ").map(tag => <NavLink to={{ pathname: `/questionOntags/${tag.toLowerCase()}` }} className='question-tags' Style="color:hsl(205,47%,42%); background-color: hsl(205,46%,92%); border-radius:5px;">{tag}</NavLink>)}</div>
-                                <div className="author">
-                                   
-                                    <small className='d-flex flex-row-reverse'>asked {question.date.slice(0, 10)} at {question.date.slice(12, 16)} <p Style="color:#0074CC">{question.postedBy} &nbsp;</p></small>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
+  return (
+    <ul>
+      {posts.map((question) => (
+        <li key={question._id} className="all-questions">
+          <div className="all-questions-container">
+            <div className="all-questions-left">
+              <div className="all-options">
+                <div className="all-option">
+                  <p>{votes[question._id] || 0}</p>
+                  <span>votes</span>
+                </div>
+                <div className="all-option">
+                  <p>{noOfAns[question._id] || 0}</p>
+                  <span>Answers</span>
+                </div>
+              </div>
+            </div>
+            <div className="question-answer">
+              <NavLink
+                to={`/question/${question._id}`}
+                className="card-title"
+                style={{ textDecoration: "none", color: "#0074CC" }}
+              >
+                <h4>{question.title}</h4>
+              </NavLink>
+              <div style={{ width: "90%" }}>
+                <small style={{ fontSize: "12px" }}>
+                  {parse(question.question || "")}
+                </small>
+              </div>
+              <div className="mt-3">
+                {(question.tags || "").split(" ").map((tag) => (
+                  <NavLink
+                    key={tag}
+                    to={`/questionOntags/${tag.toLowerCase()}`}
+                    className="question-tags"
+                    style={{
+                      color: "hsl(205,47%,42%)",
+                      backgroundColor: "hsl(205,46%,92%)",
+                      borderRadius: "5px",
+                    }}
+                  >
+                    {tag}
+                  </NavLink>
                 ))}
-            </ul>
-        </>
-    )
+              </div>
+              <div className="author">
+                <small className="d-flex flex-row-reverse">
+                  asked {question.date.slice(0, 10)} at{" "}
+                  {question.date.slice(11, 16)}
+                  <p style={{ color: "#0074CC" }}>{question.postedBy} &nbsp;</p>
+                </small>
+              </div>
+            </div>
+          </div>
+        </li>
+      ))}
+    </ul>
+  );
 }
